@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos.Table;
+using shortenerTools.Domain;
 
 namespace Cloud5mins.domain
 {
@@ -28,6 +29,11 @@ namespace Cloud5mins.domain
         private  CloudTable GetUrlsTable(){
             CloudTable table = GetTable("UrlsDetails");
             return table;
+        }
+
+        private CloudTable GetClickWebhookTable()
+        {
+            return GetTable("WebhookUrls");
         }
 
         private  CloudTable GetTable(string tableName){
@@ -66,6 +72,26 @@ namespace Cloud5mins.domain
             return lstShortUrl;
         }
 
+        public async Task<List<WebhookEntity>> GetAllWebhooks()
+        {
+            var webhookTable = GetClickWebhookTable();
+            TableContinuationToken token = null;
+            var results = new List<WebhookEntity>();
+            do
+            {
+                // Retreiving all entities that are NOT the NextId entity 
+                // (it's the only one in the partion "KEY")
+                TableQuery<ShortUrlEntity> rangeQuery = new TableQuery<ShortUrlEntity>().Where(
+                    filter: TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.NotEqual, "KEY"));
+
+                var queryResult = await webhookTable.ExecuteQuerySegmentedAsync(new TableQuery<WebhookEntity>(), token);
+                results.AddRange(queryResult.Results);
+                token = queryResult.ContinuationToken;
+            } while (token != null);
+
+            return results;
+        }
+
         public async Task<List<ClickStatsEntity>> GetAllStatsByVanity(string vanity)
         {
             var tblUrls = GetStatsTable();
@@ -101,6 +127,7 @@ namespace Cloud5mins.domain
             return await SaveShortUrlEntity(originalUrl);
          }
 
+
         public async Task<ShortUrlEntity> ArchiveShortUrlEntity(ShortUrlEntity urlEntity)
         {
             ShortUrlEntity originalUrl = await GetShortUrlEntity(urlEntity);
@@ -116,7 +143,36 @@ namespace Cloud5mins.domain
              TableResult result = await GetUrlsTable().ExecuteAsync(insOperation);
              ShortUrlEntity eShortUrl = result.Result as ShortUrlEntity;
              return eShortUrl;
-        }  
+        }
+
+        public async Task<WebhookEntity> SaveWebhookEntity(WebhookEntity webhookEntity)
+        {
+            TableOperation insOperation = TableOperation.InsertOrMerge(webhookEntity);
+            TableResult result = await GetClickWebhookTable().ExecuteAsync(insOperation);
+            return result.Result as WebhookEntity;
+        }
+
+        public async Task<WebhookEntity> GetWebhookEntity(WebhookEntity row)
+        {
+            TableOperation selOperation = TableOperation.Retrieve<WebhookEntity>(row.PartitionKey, row.RowKey);
+            TableResult result = await GetClickWebhookTable().ExecuteAsync(selOperation);
+            return result.Result as WebhookEntity;
+        }
+
+        public async Task<WebhookEntity> UpdateWebhookEntity(WebhookEntity entity)
+        {
+            var originalWebhook = await GetWebhookEntity(entity);
+            originalWebhook.Url = entity.Url;
+
+            return await SaveWebhookEntity(originalWebhook);
+        }
+
+        public async Task DeleteWebhookEntity(WebhookEntity entity)
+        {
+            var originalWebhook = await GetWebhookEntity(entity);
+            var deleteOperation = TableOperation.Delete(originalWebhook);
+            TableResult result = await GetClickWebhookTable().ExecuteAsync(deleteOperation);
+        }
 
         public async void SaveClickStatsEntity(ClickStatsEntity newStats)
         {

@@ -16,9 +16,9 @@
     <None Update="proxies.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None  Update="local.settings.json">
+    <None Update="local.settings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-    </None >
+    </None>
   </ItemGroup>
 </Project>

@@ -96,7 +96,7 @@ namespace Cloud5mins.Function
                 }
                 else
                 {
-                    newRow = new ShortUrlEntity(longUrl, await Utility.GetValidEndUrl(vanity, stgHelper), title);
+                    newRow = new ShortUrlEntity(longUrl, Utility.GetValidEndUrl(vanity), title);
                 }
 
                 await stgHelper.SaveShortUrlEntity(newRow);

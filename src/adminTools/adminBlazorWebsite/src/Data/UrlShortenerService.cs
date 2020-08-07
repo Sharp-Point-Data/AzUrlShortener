@@ -60,7 +60,87 @@ namespace adminBlazorWebsite.Data
             }
         }
 
+        public async Task<WebhookList> GetWebhookList()
+        {
+            var url = GetFunctionUrl("WebhookList");
 
+            CancellationToken cancellationToken;
+
+            using (var client = new HttpClient())
+            using (var request = new HttpRequestMessage(HttpMethod.Get, url))
+            {
+                using (var response = await client
+                    .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                    .ConfigureAwait(false))
+                {
+                    var resultList = response.Content.ReadAsStringAsync().Result;
+                    return JsonConvert.DeserializeObject<WebhookList>(resultList);
+                }
+            }
+        }
+
+        public async Task<WebhookList> CreateWebhook(WebhookRequest webhookRequest)
+        {
+            var url = GetFunctionUrl("WebhookAdd");
+
+            CancellationToken cancellationToken;
+
+            using (var client = new HttpClient())
+            using (var request = new HttpRequestMessage(HttpMethod.Post, url))
+            using (var httpContent = CreateHttpContent(webhookRequest))
+            {
+                request.Content = httpContent;
+
+                using (var response = await client
+                    .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                    .ConfigureAwait(false))
+                {
+                    return await GetWebhookList();
+                }
+            }
+        }
+
+        public async Task<WebhookList> UpdateWebhook(WebhookEntity editedWebhook)
+        {
+            var url = GetFunctionUrl("WebhookUpdate");
+
+            CancellationToken cancellationToken;
+
+            using (var client = new HttpClient())
+            using (var request = new HttpRequestMessage(HttpMethod.Post, url))
+            using (var httpContent = CreateHttpContent(editedWebhook))
+            {
+                request.Content = httpContent;
+
+                using (var response = await client
+                    .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                    .ConfigureAwait(false))
+                {
+                    return await GetWebhookList();
+                }
+            }
+        }
+
+        public async Task<WebhookList> DeleteWebhook(WebhookEntity webhook)
+        {
+            var url = GetFunctionUrl("WebhookDelete");
+
+            CancellationToken cancellationToken;
+
+            using (var client = new HttpClient())
+            using (var request = new HttpRequestMessage(HttpMethod.Post, url))
+            using (var httpContent = CreateHttpContent(webhook))
+            {
+                request.Content = httpContent;
+
+                using (var response = await client
+                    .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                    .ConfigureAwait(false))
+                {
+                    return await GetWebhookList();
+                }
+            }
+        }
 
         public async Task<ShortUrlList> CreateShortUrl(ShortUrlRequest shortUrlRequest)
         {
@@ -78,9 +158,7 @@ namespace adminBlazorWebsite.Data
                     .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
                     .ConfigureAwait(false))
                 {
-
-                    var resultList = response.Content.ReadAsStringAsync().Result;
-                    return JsonConvert.DeserializeObject<ShortUrlList>(resultList);
+                    return await GetUrlList();
                 }
             }
         }

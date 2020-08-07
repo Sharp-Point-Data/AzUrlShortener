@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -8,13 +9,12 @@ namespace Cloud5mins.domain
         private const string Alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
         private static readonly int Base = Alphabet.Length;
 
-        public static async Task<string> GetValidEndUrl(string vanity, StorageTableHelper stgHelper)
+        public static string GetValidEndUrl(string vanity)
         {
             if(string.IsNullOrEmpty(vanity))
             {
-                var newKey = await stgHelper.GetNextTableId();
-                string getCode() => Encode(newKey); 
-                return string.Join(string.Empty, getCode());
+                string code = GetUrlSafeBase64Guid();
+                return string.Join(string.Empty, code);
             }
             else
             {
@@ -22,18 +22,12 @@ namespace Cloud5mins.domain
             }
         }
 
-        public static string Encode(int i)
+        private static string GetUrlSafeBase64Guid()
         {
-            if (i == 0)
-                return Alphabet[0].ToString();
-            var s = string.Empty;
-            while (i > 0)
-            {
-                s += Alphabet[i % Base];
-                i = i / Base;
-            }
-
-            return string.Join(string.Empty, s.Reverse());
+            return Convert.ToBase64String(Guid.NewGuid().ToByteArray())
+                .Replace("/", "-")
+                .Replace("+", "_")
+                .Replace("=", "");
         }
 
         public static string GetShortUrl(string host, string vanity){
